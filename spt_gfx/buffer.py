@@ -43,13 +43,13 @@ class Buffer:
         return
 
     def setString(self, x: int, y: int, data: str):
-        if 1 <= x <= self._width and 1 <= y <= self._height:
+        if x <= self._width and 1 <= y <= self._height:
             self._setCurPos(x, y)
             self._data.append(_filter(data))
         return
 
     def setText(self, x: int, y: int, data: str):
-        if 1 <= x < self._width and 1 <= y < self._height:
+        if x < self._width and 1 <= y < self._height:
             lines: List[str] = data.split("\n")
             for i in range(len(lines)):
                 if len(lines[i]) > 0:
