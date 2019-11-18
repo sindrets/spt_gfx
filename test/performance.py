@@ -1,6 +1,7 @@
-import os, sys
+import sys
+from pathlib import Path
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
+sys.path.append(str(Path(__file__).absolute().parent.parent))
 
 from time import time_ns
 from threading import Thread
@@ -15,6 +16,7 @@ def main():
 
     try:
         totalFrameCount: int = 0
+        totalChars: int = 0
         frames: int = 0
         fps: int = 0
         last: int = 0
@@ -28,6 +30,7 @@ def main():
             content += ("@" * screen.getWidth())
             if y < screen.getHeight():
                 content += "\n"
+        totalChars += len(content)
 
         def screenUpdate(this: Screen):
             nonlocal totalFrameCount, frames, fps, last
@@ -47,7 +50,9 @@ def main():
         def infoUpdate(this: Buffer):
             this.clear()
             this.setString(1, this.getHeight() - 1,
-                           color.bgWhite.black(f"  total frame count: {totalFrameCount}    fps: {fps}")
+                           color.bgWhite.black(
+                               f"  total frame count: {totalFrameCount}    "
+                               f"fps: {fps}    chars drawn per frame: {totalChars}")
                            + color.bgWhite(" " * this.getWidth())
                            )
             this.setString(1, this.getHeight(),

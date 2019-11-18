@@ -20,7 +20,7 @@ class Screen(Buffer):
     def __init__(self):
         super().__init__()
         self._out = Output()
-        self._renderer = Renderer(self._out)
+        self._renderer = Renderer(self._out, self._eventHandler)
         self._renderer.addBuffer(self)
         return
 
@@ -67,4 +67,8 @@ class Screen(Buffer):
 
     def addKeyListener(self, callback: Callable[[KeyEvent], None]):
         self._eventHandler.on(Event.KEY_PRESSED, callback)
+        return
+
+    def addResizeListener(self, callback: Callable):
+        self._eventHandler.on(Event.WIN_RESIZE, callback)
         return

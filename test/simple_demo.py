@@ -1,6 +1,7 @@
-import os, sys
+import sys
+from pathlib import Path
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
+sys.path.append(str(Path(__file__).absolute().parent.parent))
 
 from spt_gfx import Screen, KeyEvent
 from spt_gfx import color

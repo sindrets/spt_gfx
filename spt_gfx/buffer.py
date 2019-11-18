@@ -31,7 +31,6 @@ class Buffer:
         size = get_terminal_size()
         self._width = size.columns
         self._height = size.lines
-        self._eventHandler.trigger(Event.WIN_RESIZE)
         return
 
     def clear(self):
@@ -61,26 +60,24 @@ class Buffer:
             return
         limit: int = self.getWidth() - x + 1
         ci = 0
-        i = 0
-        l = 0
+        xOffset = 0
+        lineOffset = 0
         line = ""
         while ci < len(data):
             char: str = data[ci]
-            i += 1
-            if i == limit or char == "\n":
-                self.setString(x, y + l, line)
-                l += 1
-                i = 0
+            xOffset += 1
+            if xOffset == limit or char == "\n":
+                self.setString(x, y + lineOffset, line)
+                lineOffset += 1
+                xOffset = 0
                 line = ""
+                if char == "\n":
+                    ci += 1
                 continue
             ci += 1
             line += char
         if len(line) > 0:
-            self.setString(x, y + l, line)
-        return
-
-    def addResizeListener(self, callback: Callable):
-        self._eventHandler.on(Event.WIN_RESIZE, callback)
+            self.setString(x, y + lineOffset, line)
         return
 
     def getData(self) -> List[str]:

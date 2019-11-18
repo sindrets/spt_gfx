@@ -54,7 +54,7 @@ class Style:
         self.ansiCode = code
 
     def __call__(self, text: str):
-        return self.ansiCode + text + AnsiStyle.RESET.value
+        return AnsiStyle.RESET.value + self.ansiCode + text + AnsiStyle.RESET.value
 
 
 class Color:
@@ -68,7 +68,7 @@ class Color:
         result: str = ""
         for style in self._styles:
             result += style.ansiCode
-        return result + text + AnsiStyle.RESET.value
+        return AnsiStyle.RESET.value + result + text + AnsiStyle.RESET.value
 
     def _clone(self, newStyle: Style):
         clone = Color()

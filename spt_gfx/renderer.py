@@ -3,15 +3,19 @@ from typing import List
 
 from .buffer import Buffer
 from .output import Output
+from .event_handler import EventHandler
+from .event import Event
 
 
 class Renderer:
 
     _out: Output
+    _eventHandler: EventHandler
     _buffers: List[Buffer]
 
-    def __init__(self, output: Output):
+    def __init__(self, output: Output, eventHandler: EventHandler):
         self._out = output
+        self._eventHandler = eventHandler
         self._buffers = []
         signal(SIGWINCH, self._onResize)
 
@@ -22,6 +26,7 @@ class Renderer:
     def _onResize(self, *args):
         for buffer in self._buffers:
             buffer.resize()
+        self._eventHandler.trigger(Event.WIN_RESIZE)
         self.render()
         return
 
