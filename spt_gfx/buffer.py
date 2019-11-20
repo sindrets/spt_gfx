@@ -1,13 +1,16 @@
 import re
 from os import get_terminal_size
 from typing import List, Callable
+import re
 
-from .event import Event
 from .event_handler import EventHandler
 
 
 def _filter(string: str) -> str:
     return re.sub(r"[\n\r]", "", str(string))
+
+
+ansi_escape_regex = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
 
 
 class Buffer:
@@ -58,13 +61,24 @@ class Buffer:
     def setTextWrap(self, x: int, y: int, data: str):
         if len(data) == 0:
             return
+        escapes = list(ansi_escape_regex.finditer(data))
+        nextEscape = escapes.pop(0) if escapes else None
         limit: int = self.getWidth() - x + 1
-        ci = 0
+        currentIndex = 0
         xOffset = 0
         lineOffset = 0
         line = ""
-        while ci < len(data):
-            char: str = data[ci]
+        while currentIndex < len(data):
+
+            if nextEscape:
+                span = nextEscape.span()
+                if span[0] <= currentIndex <= span[1] - 1:
+                    line += nextEscape.group()
+                    currentIndex = span[1]
+                    nextEscape = escapes.pop(0) if escapes else None
+                    continue
+
+            char: str = data[currentIndex]
             xOffset += 1
             if xOffset == limit or char == "\n":
                 self.setString(x, y + lineOffset, line)
@@ -72,9 +86,10 @@ class Buffer:
                 xOffset = 0
                 line = ""
                 if char == "\n":
-                    ci += 1
+                    currentIndex += 1
                 continue
-            ci += 1
+
+            currentIndex += 1
             line += char
         if len(line) > 0:
             self.setString(x, y + lineOffset, line)

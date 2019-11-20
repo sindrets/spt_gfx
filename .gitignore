@@ -4,4 +4,5 @@ __pycache__
 .vscode
 test.py
 notes.md
+err.log
 

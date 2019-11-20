@@ -19,7 +19,6 @@ if __name__ == "__main__":
             "This text is written directly to the screen, and will disappear on the next screen refresh."
         ))
 
-
         def screenUpdate(this: Screen):
             this.setTextWrap(
                 10, 9,
