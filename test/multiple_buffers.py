@@ -26,15 +26,17 @@ def main():
         currentStyle = styles[currentStyleIndex]
 
     lorem = ""
-    with open(Path(__file__).joinpath("../lorem_ipsum.txt").resolve(), "r") as file:
+    with open(Path(__file__).joinpath("../linux.txt").resolve(), "r") as file:
         lorem = file.read()
 
     content = Buffer()
 
+    contentY = 1
+
     def contentUpdate(this: Buffer):
         nonlocal currentStyle
         this.clear()
-        this.setTextWrap(1, 1, currentStyle(lorem))
+        this.setTextWrapWords(1, contentY, currentStyle(lorem))
     content.update = contentUpdate
     content.setZ(1)
     screen.addBuffer(content)
@@ -45,7 +47,7 @@ def main():
         this.clear()
         this.setString(
             1, this.getHeight(), color.bgWhite.black(
-                "  enter: cycle styles  ctrl+c: quit"
+                "  enter: cycle styles    scroll: ↑/↓    ctrl+c: quit"
                 + (" " * this.getWidth())
             )
         )
@@ -54,8 +56,15 @@ def main():
     screen.addBuffer(ui)
 
     def onKeyPressed(keyEvent: KeyEvent):
+        nonlocal contentY
         if Key.ENTER in keyEvent.keys:
             cycleStyles()
+            screen.refresh()
+        if Key.UP in keyEvent.keys:
+            contentY += 1
+            screen.refresh()
+        if Key.DOWN in keyEvent.keys:
+            contentY -= 1
             screen.refresh()
 
     screen.addKeyListener(onKeyPressed)

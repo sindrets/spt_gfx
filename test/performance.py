@@ -77,6 +77,8 @@ def main():
                 running = not running
                 if running:
                     Thread(target=runDiagnostic).start()
+            if {Key.CTRL_C, Key.CTRL_D}.intersection(keyEvent.keys):
+                running = False
 
         screen.addKeyListener(onKeyPressed)
 

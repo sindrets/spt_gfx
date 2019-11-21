@@ -3,6 +3,7 @@ from os import get_terminal_size
 from typing import List, Callable
 import re
 
+from .color import AnsiStyle
 from .event_handler import EventHandler
 
 
@@ -10,7 +11,8 @@ def _filter(string: str) -> str:
     return re.sub(r"[\n\r]", "", str(string))
 
 
-ansi_escape_regex = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+ansiEscapeRegex = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+wordChunkRegex = re.compile(r'[\w\"\'&%/(\[]*[-,.!?:;\])]*')
 
 
 class Buffer:
@@ -61,8 +63,9 @@ class Buffer:
     def setTextWrap(self, x: int, y: int, data: str):
         if len(data) == 0:
             return
-        escapes = list(ansi_escape_regex.finditer(data))
+        escapes = list(ansiEscapeRegex.finditer(data))
         nextEscape = escapes.pop(0) if escapes else None
+        currentEscapes = []
         limit: int = self.getWidth() - x + 1
         currentIndex = 0
         xOffset = 0
@@ -73,26 +76,105 @@ class Buffer:
             if nextEscape:
                 span = nextEscape.span()
                 if span[0] <= currentIndex <= span[1] - 1:
-                    line += nextEscape.group()
+                    value = nextEscape.group()
+                    if value != AnsiStyle.RESET.value or len(currentEscapes) == 0:
+                        currentEscapes.append(value)
+                    else:
+                        line = "".join(currentEscapes) + line + value
+                        currentEscapes.clear()
                     currentIndex = span[1]
                     nextEscape = escapes.pop(0) if escapes else None
                     continue
 
             char: str = data[currentIndex]
+            currentIndex += 1
             xOffset += 1
-            if xOffset == limit or char == "\n":
-                self.setString(x, y + lineOffset, line)
+            if xOffset > limit or char == "\n":
+                self.setString(x, y + lineOffset, "".join(currentEscapes) + line + AnsiStyle.RESET.value)
                 lineOffset += 1
-                xOffset = 0
-                line = ""
-                if char == "\n":
-                    currentIndex += 1
+                xOffset = 1
+                line = char
                 continue
 
-            currentIndex += 1
             line += char
         if len(line) > 0:
-            self.setString(x, y + lineOffset, line)
+            self.setString(x, y + lineOffset, "".join(currentEscapes) + line)
+        return
+
+    def setTextWrapWords(self, x: int, y: int, data: str):
+        if len(data) == 0:
+            return
+
+        escapes = list(ansiEscapeRegex.finditer(data))
+        nextEscape = escapes.pop(0) if escapes else None
+        currentEscapes = []
+        words = list(wordChunkRegex.finditer(data))
+
+        def getNextWord():
+            w = words.pop(0) if words else None
+            while w and w.span()[0] == w.span()[1]:
+                w = words.pop(0) if words else None
+            return w
+
+        nextWord = getNextWord()
+        limit: int = self.getWidth() - x + 1
+        currentIndex = 0
+        xOffset = 0
+        lineOffset = 0
+        line = ""
+
+        while currentIndex < len(data):
+
+            if nextEscape:
+                span = nextEscape.span()
+                if span[0] <= currentIndex <= span[1] - 1:
+                    value = nextEscape.group()
+                    if value != AnsiStyle.RESET.value or len(currentEscapes) == 0:
+                        currentEscapes.append(value)
+                    else:
+                        line = "".join(currentEscapes) + line + value
+                        currentEscapes.clear()
+                    currentIndex = span[1]
+                    nextEscape = escapes.pop(0) if escapes else None
+                    if nextWord.span()[1] <= currentIndex:
+                        nextWord = getNextWord()
+                    continue
+
+            if nextWord:
+                span = nextWord.span()
+                if span[0] <= currentIndex <= span[1] - 1:
+                    word = data[currentIndex:span[1]]
+                    xOffset += len(word)
+                    if xOffset > limit:
+                        self.setString(x, y + lineOffset, "".join(currentEscapes) + line + AnsiStyle.RESET.value)
+                        lineOffset += 1
+                        xOffset = len(word)
+                        line = word
+                    else:
+                        line += word
+                    currentIndex = span[1]
+                    nextWord = getNextWord()
+                    continue
+
+            char: str = data[currentIndex]
+            currentIndex += 1
+            xOffset += 1
+            if xOffset > limit or char == "\n":
+                self.setString(x, y + lineOffset, "".join(currentEscapes) + line + AnsiStyle.RESET.value)
+                lineOffset += 1
+                if char != " ":
+                    line = char
+                    xOffset = 1
+                else:
+                    line = ""
+                    xOffset = 0
+                continue
+
+            line += char
+
+        if len(line) > 0:
+            self.setString(x, y + lineOffset, "".join(currentEscapes) + line)
+
         return
 
     def getData(self) -> List[str]:

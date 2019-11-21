@@ -46,7 +46,7 @@ The `screen.update` property is a callable that is a called on each screen refre
 
 The `screen.refresh()` method will first call every buffer's update method before rendering all pending draw events to the screen.
 
-There are three methods for drawing text to the screen:
+There are four methods for drawing text to the screen:
 
 ```python
 buffer.setString(x: int, y: int, data: str)
@@ -64,7 +64,13 @@ This method supports newline characters and new lines will start from the same x
 buffer.setTextWrap(x: int, y: int, data: str)
 ```
 
-This method supports newline characters and will also automatically wrap text that reaches the end of the screen.
+This method supports newline characters and will also automatically hard-wrap text that reaches the end of the screen.
+
+```python
+buffer.setTextWrapWords(x: int, y: int, data: str)
+```
+
+This is similar to the `setTextWrap` method, but this will sensibly wrap words.
 
 ### Using multiple Buffer objects
 
