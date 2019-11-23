@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union
+from typing import Dict, List, Union
 
 
 class AnsiStyle(Enum):
@@ -9,6 +9,7 @@ class AnsiStyle(Enum):
     ITALIC = u"\x1b[3m"  # not widely supported, sometimes treated as reverse
     UNDERLINE = u"\x1b[4m"
     REVERSED = u"\x1b[7m"  # swap foreground and background colors
+    STRIKETHROUGH = u"\x1b[9m"
     BLACK = u"\x1b[30m"
     RED = u"\x1b[31m"
     GREEN = u"\x1b[32m"
@@ -59,49 +60,68 @@ class Style:
 
 class Color:
 
+    _rootInstance: "Color"
     _styles: List[Style]
+    _currentStyles: Dict[int, List[Style]]  # Keep track of styles on each level to handle nesting.
+    _nestLevel: int
 
     def __init__(self):
+        self._rootInstance = self
         self._styles = []
+        self._currentStyles = {}
+        self._nestLevel = 0
 
     def __call__(self, text) -> str:
-        result: str = ""
+        styles: str = ""
+        prevStyles: str = ""
+        prev = self._rootInstance._currentStyles.get(self._rootInstance._nestLevel - 1) or []
         for style in self._styles:
-            result += style.ansiCode
-        return AnsiStyle.RESET.value + result + text + AnsiStyle.RESET.value
+            styles += style.ansiCode
+        for style in prev:
+            prevStyles += style.ansiCode
+        self._rootInstance._nestLevel = max(self._rootInstance._nestLevel - 1, 0)
+        if self._rootInstance._nestLevel == 0:
+            self._rootInstance._currentStyles = {}
+        return AnsiStyle.RESET.value + styles + text + AnsiStyle.RESET.value + prevStyles
 
     def _clone(self, newStyle: Style):
         clone = Color()
+        clone._rootInstance = self._rootInstance
+        if clone._rootInstance is self:
+            self._rootInstance._nestLevel += 1
         clone._styles = self._styles.copy()
         if newStyle is not None:
             clone._styles.append(newStyle)
+        self._rootInstance._currentStyles.update(
+            {self._rootInstance._nestLevel: clone._styles}
+        )
         return clone
 
     def ansi(self, ansiCode: str) -> "Color":
         return self._clone(Style(ansiCode))
 
-    def fg16(self, n: int) -> "Color":
+    def ansi16(self, n: int) -> "Color":
         code = u"\x1b[3" + str(n % 8)
         if n > 7:
             code += ";1"
         return self._clone(Style(code + "m"))
 
-    def bg16(self, n: int) -> "Color":
+    def bgAnsi16(self, n: int) -> "Color":
         code = u"\x1b[4" + str(n % 8)
         if n > 7:
             code += ";1"
         return self._clone(Style(code + "m"))
 
-    def fg256(self, n: int) -> "Color":
+    def ansi256(self, n: int) -> "Color":
         return self._clone(Style(u"\x1b[38;5;" + str(n % 256) + "m"))
 
-    def bg256(self, n: int) -> "Color":
+    def bgAnsi256(self, n: int) -> "Color":
         return self._clone(Style(u"\x1b[48;5;" + str(n % 256) + "m"))
 
-    def fgRGB(self, r: int, g: int, b: int) -> "Color":
+    def rgb(self, r: int, g: int, b: int) -> "Color":
         return self._clone(Style(u"\x1b[38;2;" + f"{r};{g};{b}m"))
 
-    def bgRGB(self, r: int, g: int, b: int) -> "Color":
+    def bgRgb(self, r: int, g: int, b: int) -> "Color":
         return self._clone(Style(u"\x1b[48;2;" + f"{r};{g};{b}m"))
 
     # --- TEXT ATTRIBUTES ---
@@ -125,6 +145,10 @@ class Color:
     @property
     def reversed(self) -> "Color":
         return self._clone(Style(AnsiStyle.REVERSED))
+
+    @property
+    def strikethrough(self) -> "Color":
+        return self._clone(Style(AnsiStyle.STRIKETHROUGH))
 
     # --- FG8 ---
 
@@ -264,3 +288,22 @@ class Color:
 
 
 color = Color()
+
+if __name__ == "__main__":
+
+    # Test nesting
+    print(color.green(
+        "I am a green line " +
+        color.blue.underline.bold("with a blue substring") +
+        " that becomes green again!"
+    ))
+
+    print(color.yellow(
+        "<lvl1>" +
+        color.blue.bold(
+            "<lvl2>" +
+            color.magenta.italic("<lvl3></lvl3>") +
+            "</lvl2>"
+        ) +
+        "</lvl1>"
+    ))

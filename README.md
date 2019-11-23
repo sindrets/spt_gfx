@@ -5,6 +5,11 @@
 
 > Note: Only works with ANSI terminals. This framework heavily relies on ANSI control sequences, and I'm not really interested in supporting Windows.
 
+### Installation
+```sh
+sudo python3 setup.py install
+```
+
 ### Usage
 
 Following is a simple example of how to draw some text to the screen and attach a key listener.
@@ -156,5 +161,5 @@ print(color.yellow.bgCyan.italic.underline("Foo bar."))
 For terminals that support truecolor you can also use RGB:
 
 ```python
-print(color.bgRGB(233, 30, 99)("Foo bar."))
+print(color.bgRgb(233, 30, 99)("Foo bar."))
 ```

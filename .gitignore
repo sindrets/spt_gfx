@@ -1,8 +1,13 @@
 
+# build files
+build
+dist
+*.egg-info
+
+# misc
 __pycache__
 .idea
 .vscode
 test.py
 notes.md
 err.log
-
