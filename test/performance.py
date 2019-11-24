@@ -43,6 +43,7 @@ def main():
                 frames = 0
                 last += 1000
             return
+
         screen.update = screenUpdate
 
         info = Buffer()
@@ -50,16 +51,20 @@ def main():
         def infoUpdate(this: Buffer):
             this.clear()
             this.setString(1, this.getHeight() - 1,
-                           color.bgWhite.black(
-                               f"  total frame count: {totalFrameCount}    "
-                               f"fps: {fps}    chars drawn per frame: {totalChars}")
-                           + color.bgWhite(" " * this.getWidth())
-                           )
+                color.bgWhite.black(
+                   f"  total frame count: {totalFrameCount}    " +
+                   f"fps: {fps}    chars drawn per frame: {totalChars}" +
+                   (" " * this.getWidth())
+                )
+            )
             this.setString(1, this.getHeight(),
-                           color.bgWhite.black("  start/stop diagnostic: enter")
-                           + color.bgWhite(" " * this.getWidth())
-                           )
+                color.bgWhite.black(
+                   "  start/stop diagnostic: enter" +
+                   (" " * this.getWidth())
+                )
+            )
             return
+
         info.update = infoUpdate
         info.setZ(2)
         screen.addBuffer(info)

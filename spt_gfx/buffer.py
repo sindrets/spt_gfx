@@ -47,13 +47,54 @@ class Buffer:
         return
 
     def setString(self, x: int, y: int, data: str):
-        if x <= self._width and 1 <= y <= self._height:
-            self._setCurPos(x, y)
-            self._data.append(_filter(data))
+        if len(data) == 0:
+            return
+        if 0 <= x + len(data) and x <= self._width and 1 <= y <= self._height:
+            escapes = list(ansiEscapeRegex.finditer(data))
+            nextEscape = escapes.pop(0) if escapes else None
+            preStyles = ""
+            postStyles = ""
+            limit = min(self._width, self._width - x + 1)
+            start = abs(min(x - 1, 0))
+            line = ""
+            xOffset = 0
+            currentIndex = 0
+            while currentIndex < len(data):
+
+                if nextEscape:
+                    span = nextEscape.span()
+                    if span[0] <= currentIndex <= span[1] - 1:
+                        value = nextEscape.group()
+                        if xOffset < start:
+                            if value == AnsiStyle.RESET.value:
+                                preStyles = ""
+                            else:
+                                preStyles += value
+                        elif xOffset > limit:
+                            postStyles += value
+                        else:
+                            line += value
+                        currentIndex = span[1]
+                        nextEscape = escapes.pop(0) if escapes else None
+                        continue
+
+                if xOffset - start < limit:
+                    char = data[currentIndex]
+                    if char in ["\n", "\r"]:
+                        currentIndex += 1
+                        continue
+                    if start <= xOffset:
+                        line += char
+                    xOffset += 1
+
+                currentIndex += 1
+
+            self._setCurPos(max(x, 1), min(y, self._height))
+            self._data.append(preStyles + line + postStyles)
         return
 
     def setText(self, x: int, y: int, data: str):
-        if x < self._width and 1 <= y < self._height:
+        if x <= self._width and y < self._height:
             lines: List[str] = data.split("\n")
             for i in range(len(lines)):
                 if len(lines[i]) > 0:

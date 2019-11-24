@@ -31,12 +31,13 @@ def main():
 
     content = Buffer()
 
+    contentX = 1
     contentY = 1
 
     def contentUpdate(this: Buffer):
         nonlocal currentStyle
         this.clear()
-        this.setTextWrapWords(1, contentY, currentStyle(lorem))
+        this.setTextWrapWords(contentX, contentY, currentStyle(lorem))
     content.update = contentUpdate
     content.setZ(1)
     screen.addBuffer(content)
@@ -56,7 +57,7 @@ def main():
     screen.addBuffer(ui)
 
     def onKeyPressed(keyEvent: KeyEvent):
-        nonlocal contentY
+        nonlocal contentX, contentY
         if Key.ENTER in keyEvent.keys:
             cycleStyles()
             screen.refresh()
@@ -65,6 +66,12 @@ def main():
             screen.refresh()
         if Key.DOWN in keyEvent.keys:
             contentY -= 1
+            screen.refresh()
+        if Key.LEFT in keyEvent.keys:
+            contentX += 1
+            screen.refresh()
+        if Key.RIGHT in keyEvent.keys:
+            contentX -= 1
             screen.refresh()
 
     screen.addKeyListener(onKeyPressed)

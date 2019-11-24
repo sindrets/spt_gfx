@@ -60,42 +60,31 @@ class Style:
 
 class Color:
 
-    _rootInstance: "Color"
     _styles: List[Style]
-    _currentStyles: Dict[int, List[Style]]  # Keep track of styles on each level to handle nesting.
-    _nestLevel: int
 
     def __init__(self):
-        self._rootInstance = self
         self._styles = []
-        self._currentStyles = {}
-        self._nestLevel = 0
 
-    def __call__(self, text) -> str:
-        styles: str = ""
-        prevStyles: str = ""
-        prev = self._rootInstance._currentStyles.get(self._rootInstance._nestLevel - 1) or []
-        for style in self._styles:
-            styles += style.ansiCode
-        for style in prev:
-            prevStyles += style.ansiCode
-        self._rootInstance._nestLevel = max(self._rootInstance._nestLevel - 1, 0)
-        if self._rootInstance._nestLevel == 0:
-            self._rootInstance._currentStyles = {}
-        return AnsiStyle.RESET.value + styles + text + AnsiStyle.RESET.value + prevStyles
+    def __call__(self, text: str) -> str:
+        styles: str = self.getAnsiCode()
+        lastReset = text.rfind(AnsiStyle.RESET.value)
+        if lastReset != -1:
+            lastReset += len(AnsiStyle.RESET.value)
+            text = text[:lastReset] + styles + text[lastReset:]
+        return AnsiStyle.RESET.value + styles + text + AnsiStyle.RESET.value
 
     def _clone(self, newStyle: Style):
         clone = Color()
-        clone._rootInstance = self._rootInstance
-        if clone._rootInstance is self:
-            self._rootInstance._nestLevel += 1
         clone._styles = self._styles.copy()
         if newStyle is not None:
             clone._styles.append(newStyle)
-        self._rootInstance._currentStyles.update(
-            {self._rootInstance._nestLevel: clone._styles}
-        )
         return clone
+
+    def getAnsiCode(self) -> str:
+        code = ""
+        for style in self._styles:
+            code += style.ansiCode
+        return code
 
     def ansi(self, ansiCode: str) -> "Color":
         return self._clone(Style(ansiCode))
