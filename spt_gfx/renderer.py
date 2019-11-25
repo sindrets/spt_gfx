@@ -1,3 +1,4 @@
+from shutil import get_terminal_size
 from signal import signal, SIGWINCH
 from typing import List
 
@@ -24,8 +25,9 @@ class Renderer:
         return
 
     def _onResize(self, *args):
+        size = get_terminal_size()
         for buffer in self._buffers:
-            buffer.resize()
+            buffer.resize(size.columns, size.lines)
         self._eventHandler.trigger(Event.WIN_RESIZE)
         self.render()
         return
