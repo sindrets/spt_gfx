@@ -1,77 +1,110 @@
-from enum import Enum
-from typing import Dict, List, Union
+from typing import List
+import re
 
-
-class AnsiStyle(Enum):
-    RESET = u"\x1b[0m"
-    BOLD = u"\x1b[1m"
-    DIM = u"\x1b[2m"  # not widely supported
-    ITALIC = u"\x1b[3m"  # not widely supported, sometimes treated as reverse
-    UNDERLINE = u"\x1b[4m"
-    REVERSED = u"\x1b[7m"  # swap foreground and background colors
-    STRIKETHROUGH = u"\x1b[9m"
-    BLACK = u"\x1b[30m"
-    RED = u"\x1b[31m"
-    GREEN = u"\x1b[32m"
-    YELLOW = u"\x1b[33m"
-    BLUE = u"\x1b[34m"
-    MAGENTA = u"\x1b[35m"
-    CYAN = u"\x1b[36m"
-    WHITE = u"\x1b[37m"
-    BLACK_BRIGHT = u"\x1b[30;1m"
-    RED_BRIGHT = u"\x1b[31;1m"
-    GREEN_BRIGHT = u"\x1b[32;1m"
-    YELLOW_BRIGHT = u"\x1b[33;1m"
-    BLUE_BRIGHT = u"\x1b[34;1m"
-    MAGENTA_BRIGHT = u"\x1b[35;1m"
-    CYAN_BRIGHT = u"\x1b[36;1m"
-    WHITE_BRIGHT = u"\x1b[37;1m"
-    BG_BLACK = u"\x1b[40m"
-    BG_RED = u"\x1b[41m"
-    BG_GREEN = u"\x1b[42m"
-    BG_YELLOW = u"\x1b[43m"
-    BG_BLUE = u"\x1b[44m"
-    BG_MAGENTA = u"\x1b[45m"
-    BG_CYAN = u"\x1b[46m"
-    BG_WHITE = u"\x1b[47m"
-    BG_BLACK_BRIGHT = u"\x1b[40;1m"
-    BG_RED_BRIGHT = u"\x1b[41;1m"
-    BG_GREEN_BRIGHT = u"\x1b[42;1m"
-    BG_YELLOW_BRIGHT = u"\x1b[43;1m"
-    BG_BLUE_BRIGHT = u"\x1b[44;1m"
-    BG_MAGENTA_BRIGHT = u"\x1b[45;1m"
-    BG_CYAN_BRIGHT = u"\x1b[46;1m"
-    BG_WHITE_BRIGHT = u"\x1b[47;1m"
+ansiEscapeRegex = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
 
 
 class Style:
+    open: str
+    close: str
 
-    ansiCode: str
-
-    def __init__(self, ansiCode: Union[str, AnsiStyle]):
-        code = ansiCode
-        if isinstance(ansiCode, AnsiStyle):
-            code = ansiCode.value
-        self.ansiCode = code
+    def __init__(self, open: str, close: str):
+        self.open = open
+        self.close = close
 
     def __call__(self, text: str):
-        return AnsiStyle.RESET.value + self.ansiCode + text + AnsiStyle.RESET.value
+        return AnsiStyle.RESET.open + self.open + text + AnsiStyle.RESET.open
+
+
+class AnsiStyle:
+    RESET = Style(open='\x1b[0m', close='\x1b[0m')
+    BOLD = Style(open='\x1b[1m', close='\x1b[22m')
+    DIM = Style(open='\x1b[2m', close='\x1b[22m')
+    ITALIC = Style(open='\x1b[3m', close='\x1b[23m')
+    UNDERLINE = Style(open='\x1b[4m', close='\x1b[24m')
+    REVERSE = Style(open='\x1b[7m', close='\x1b[27m')
+    HIDDEN = Style(open='\x1b[8m', close='\x1b[28m')
+    STRIKETHROUGH = Style(open='\x1b[9m', close='\x1b[29m')
+    BLACK = Style(open='\x1b[30m', close='\x1b[39m')
+    RED = Style(open='\x1b[31m', close='\x1b[39m')
+    GREEN = Style(open='\x1b[32m', close='\x1b[39m')
+    YELLOW = Style(open='\x1b[33m', close='\x1b[39m')
+    BLUE = Style(open='\x1b[34m', close='\x1b[39m')
+    MAGENTA = Style(open='\x1b[35m', close='\x1b[39m')
+    CYAN = Style(open='\x1b[36m', close='\x1b[39m')
+    WHITE = Style(open='\x1b[37m', close='\x1b[39m')
+    BLACK_BRIGHT = Style(open='\x1b[90m', close='\x1b[39m')
+    RED_BRIGHT = Style(open='\x1b[91m', close='\x1b[39m')
+    GREEN_BRIGHT = Style(open='\x1b[92m', close='\x1b[39m')
+    YELLOW_BRIGHT = Style(open='\x1b[93m', close='\x1b[39m')
+    BLUE_BRIGHT = Style(open='\x1b[94m', close='\x1b[39m')
+    MAGENTA_BRIGHT = Style(open='\x1b[95m', close='\x1b[39m')
+    CYAN_BRIGHT = Style(open='\x1b[96m', close='\x1b[39m')
+    WHITE_BRIGHT = Style(open='\x1b[97m', close='\x1b[39m')
+    GRAY = Style(open='\x1b[90m', close='\x1b[39m')
+    GREY = Style(open='\x1b[90m', close='\x1b[39m')
+    BG_BLACK = Style(open='\x1b[40m', close='\x1b[49m')
+    BG_RED = Style(open='\x1b[41m', close='\x1b[49m')
+    BG_GREEN = Style(open='\x1b[42m', close='\x1b[49m')
+    BG_YELLOW = Style(open='\x1b[43m', close='\x1b[49m')
+    BG_BLUE = Style(open='\x1b[44m', close='\x1b[49m')
+    BG_MAGENTA = Style(open='\x1b[45m', close='\x1b[49m')
+    BG_CYAN = Style(open='\x1b[46m', close='\x1b[49m')
+    BG_WHITE = Style(open='\x1b[47m', close='\x1b[49m')
+    BG_BLACK_BRIGHT = Style(open='\x1b[100m', close='\x1b[49m')
+    BG_RED_BRIGHT = Style(open='\x1b[101m', close='\x1b[49m')
+    BG_GREEN_BRIGHT = Style(open='\x1b[102m', close='\x1b[49m')
+    BG_YELLOW_BRIGHT = Style(open='\x1b[103m', close='\x1b[49m')
+    BG_BLUE_BRIGHT = Style(open='\x1b[104m', close='\x1b[49m')
+    BG_MAGENTA_BRIGHT = Style(open='\x1b[105m', close='\x1b[49m')
+    BG_CYAN_BRIGHT = Style(open='\x1b[106m', close='\x1b[49m')
+    BG_WHITE_BRIGHT = Style(open='\x1b[107m', close='\x1b[49m')
+    BG_GRAY = Style(open='\x1b[100m', close='\x1b[49m')
+    BG_GREY = Style(open='\x1b[100m', close='\x1b[49m')
+
+
+ANSI_CLOSERS: List[str] = [
+    AnsiStyle.RESET.close,
+    AnsiStyle.BOLD.close,
+    AnsiStyle.ITALIC.close,
+    AnsiStyle.UNDERLINE.close,
+    AnsiStyle.REVERSE.close,
+    AnsiStyle.HIDDEN.close,
+    AnsiStyle.STRIKETHROUGH.close,
+    AnsiStyle.BLACK.close,
+    AnsiStyle.BG_BLACK.close
+]
 
 
 class Color:
-
     _styles: List[Style]
 
     def __init__(self):
         self._styles = []
 
     def __call__(self, text: str) -> str:
-        styles: str = self.getAnsiCode()
-        lastReset = text.rfind(AnsiStyle.RESET.value)
-        if lastReset != -1:
-            lastReset += len(AnsiStyle.RESET.value)
-            text = text[:lastReset] + styles + text[lastReset:]
-        return AnsiStyle.RESET.value + styles + text + AnsiStyle.RESET.value
+        openers: str = self._getOpeners()
+        closers: str = self._getClosers()
+        escapes = list(ansiEscapeRegex.finditer(text))
+        escapes.reverse()
+        for e in escapes:
+            value = e.group()
+            if value in ANSI_CLOSERS:
+                text = text[:e.span()[1]] + openers + text[e.span()[1]:]
+                break
+        return openers + text + closers
+
+    def _getOpeners(self) -> str:
+        openers = ""
+        for style in self._styles:
+            openers += style.open
+        return openers
+
+    def _getClosers(self) -> str:
+        closers = ""
+        for style in self._styles:
+            closers += style.close
+        return closers
 
     def _clone(self, newStyle: Style):
         clone = Color()
@@ -83,11 +116,11 @@ class Color:
     def getAnsiCode(self) -> str:
         code = ""
         for style in self._styles:
-            code += style.ansiCode
+            code += style.open
         return code
 
     def ansi(self, ansiCode: str) -> "Color":
-        return self._clone(Style(ansiCode))
+        return self._clone(Style(ansiCode, AnsiStyle.RESET.open))
 
     def ansi16(self, n: int) -> "Color":
         code = u"\x1b[3" + str(n % 8)
@@ -117,169 +150,168 @@ class Color:
 
     @property
     def bold(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BOLD))
+        return self._clone(AnsiStyle.BOLD)
 
     @property
     def dim(self) -> "Color":
-        return self._clone(Style(AnsiStyle.DIM))
+        return self._clone(AnsiStyle.DIM)
 
     @property
     def italic(self) -> "Color":
-        return self._clone(Style(AnsiStyle.ITALIC))
+        return self._clone(AnsiStyle.ITALIC)
 
     @property
     def underline(self) -> "Color":
-        return self._clone(Style(AnsiStyle.UNDERLINE))
+        return self._clone(AnsiStyle.UNDERLINE)
 
     @property
     def reversed(self) -> "Color":
-        return self._clone(Style(AnsiStyle.REVERSED))
+        return self._clone(AnsiStyle.REVERSED)
 
     @property
     def strikethrough(self) -> "Color":
-        return self._clone(Style(AnsiStyle.STRIKETHROUGH))
+        return self._clone(AnsiStyle.STRIKETHROUGH)
 
     # --- FG8 ---
 
     @property
     def black(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BLACK))
+        return self._clone(AnsiStyle.BLACK)
 
     @property
     def red(self) -> "Color":
-        return self._clone(Style(AnsiStyle.RED))
+        return self._clone(AnsiStyle.RED)
 
     @property
     def green(self) -> "Color":
-        return self._clone(Style(AnsiStyle.GREEN))
+        return self._clone(AnsiStyle.GREEN)
 
     @property
     def yellow(self) -> "Color":
-        return self._clone(Style(AnsiStyle.YELLOW))
+        return self._clone(AnsiStyle.YELLOW)
 
     @property
     def blue(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BLUE))
+        return self._clone(AnsiStyle.BLUE)
 
     @property
     def magenta(self) -> "Color":
-        return self._clone(Style(AnsiStyle.MAGENTA))
+        return self._clone(AnsiStyle.MAGENTA)
 
     @property
     def cyan(self) -> "Color":
-        return self._clone(Style(AnsiStyle.CYAN))
+        return self._clone(AnsiStyle.CYAN)
 
     @property
     def white(self) -> "Color":
-        return self._clone(Style(AnsiStyle.WHITE))
+        return self._clone(AnsiStyle.WHITE)
 
     # --- FG16 ---
 
     @property
     def blackBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BLACK_BRIGHT))
+        return self._clone(AnsiStyle.BLACK_BRIGHT)
 
     @property
     def redBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.RED_BRIGHT))
+        return self._clone(AnsiStyle.RED_BRIGHT)
 
     @property
     def greenBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.GREEN_BRIGHT))
+        return self._clone(AnsiStyle.GREEN_BRIGHT)
 
     @property
     def yellowBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.YELLOW_BRIGHT))
+        return self._clone(AnsiStyle.YELLOW_BRIGHT)
 
     @property
     def blueBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BLUE_BRIGHT))
+        return self._clone(AnsiStyle.BLUE_BRIGHT)
 
     @property
     def magentaBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.MAGENTA_BRIGHT))
+        return self._clone(AnsiStyle.MAGENTA_BRIGHT)
 
     @property
     def cyanBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.CYAN_BRIGHT))
+        return self._clone(AnsiStyle.CYAN_BRIGHT)
 
     @property
     def whiteBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BLACK_BRIGHT))
+        return self._clone(AnsiStyle.BLACK_BRIGHT)
 
     # --- BG8 ---
 
     @property
     def bgBlack(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_BLACK))
+        return self._clone(AnsiStyle.BG_BLACK)
 
     @property
     def bgRed(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_RED))
+        return self._clone(AnsiStyle.BG_RED)
 
     @property
     def bgGreen(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_GREEN))
+        return self._clone(AnsiStyle.BG_GREEN)
 
     @property
     def bgYellow(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_YELLOW))
+        return self._clone(AnsiStyle.BG_YELLOW)
 
     @property
     def bgBlue(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_BLUE))
+        return self._clone(AnsiStyle.BG_BLUE)
 
     @property
     def bgMagenta(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_MAGENTA))
+        return self._clone(AnsiStyle.BG_MAGENTA)
 
     @property
     def bgCyan(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_CYAN))
+        return self._clone(AnsiStyle.BG_CYAN)
 
     @property
     def bgWhite(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_WHITE))
+        return self._clone(AnsiStyle.BG_WHITE)
 
     # --- BG16 ---
 
     @property
     def bgBlackBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_BLACK_BRIGHT))
+        return self._clone(AnsiStyle.BG_BLACK_BRIGHT)
 
     @property
     def bgRedBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_RED_BRIGHT))
+        return self._clone(AnsiStyle.BG_RED_BRIGHT)
 
     @property
     def bgGreenBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_GREEN_BRIGHT))
+        return self._clone(AnsiStyle.BG_GREEN_BRIGHT)
 
     @property
     def bgYellowBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_YELLOW_BRIGHT))
+        return self._clone(AnsiStyle.BG_YELLOW_BRIGHT)
 
     @property
     def bgBlueBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_BLUE_BRIGHT))
+        return self._clone(AnsiStyle.BG_BLUE_BRIGHT)
 
     @property
     def bgMagentaBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_MAGENTA_BRIGHT))
+        return self._clone(AnsiStyle.BG_MAGENTA_BRIGHT)
 
     @property
     def bgCyanBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_CYAN_BRIGHT))
+        return self._clone(AnsiStyle.BG_CYAN_BRIGHT)
 
     @property
     def bgWhiteBright(self) -> "Color":
-        return self._clone(Style(AnsiStyle.BG_BLACK_BRIGHT))
+        return self._clone(AnsiStyle.BG_BLACK_BRIGHT)
 
 
 color = Color()
 
 if __name__ == "__main__":
-
     # Test nesting
     print(color.green(
         "I am a green line " +

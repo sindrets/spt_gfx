@@ -1,4 +1,7 @@
+from typing import Union
+
 from .buffer import Buffer
+from .color import color, Color
 
 
 class Window(Buffer):
@@ -7,6 +10,8 @@ class Window(Buffer):
     _y: int
     _preferredWidth: int
     _preferredHeight: int
+    _bgChar: Union[str, None] = None
+    _bgStyle: Color
 
     def __init__(
         self,
@@ -40,8 +45,10 @@ class Window(Buffer):
                 1 <= self._y + y - 1 <= self._screenHeight
         ):
             # process line first within window bounds, then within screen bounds
-            line = self._processLine(x, self._width, data)
-            line = self._processLine(self._x + x - 1, self._screenWidth, line)
+            line, realLen = self._processLine(x, self._width, data)
+            if self._bgChar is not None:
+                line = self._bgStyle(line + (self._bgChar * (self._width - realLen)))
+            line, realLen = self._processLine(self._x + x - 1, self._screenWidth, line)
 
             if len(line) > 0:
                 self._setCurPos(max(self._x + x - 1, 1), min(self._y + y - 1, self._screenHeight))
@@ -77,3 +84,7 @@ class Window(Buffer):
 
     def modHeight(self, amount: int):
         self._height += amount
+
+    def setBg(self, style: Color, char: str = " "):
+        self._bgChar = char
+        self._bgStyle = style

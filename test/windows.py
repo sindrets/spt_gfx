@@ -19,7 +19,7 @@ def main():
 
     def win1Update(this: Window):
         this.clear()
-        this.setTextWrap(1, 1, color.yellow.bold(lorem))
+        this.setTextWrapWords(1, 1, color.yellow.bold(lorem))
 
     win1.update = win1Update
     win1.setZ(5)
@@ -29,9 +29,10 @@ def main():
 
     def win2Update(this: Window):
         this.clear()
-        this.setTextWrap(1, 1, color.red.italic(lorem))
+        this.setTextWrapWords(1, 1, color.red.italic(lorem))
 
     win2.update = win2Update
+    win2.setBg(color.bgWhite)
     win2.setZ(4)
     screen.addBuffer(win2)
 

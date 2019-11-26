@@ -1,8 +1,8 @@
 import re
 from os import get_terminal_size
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
-from .color import AnsiStyle
+from .color import AnsiStyle, ANSI_CLOSERS
 from .event_handler import EventHandler
 
 
@@ -46,7 +46,7 @@ class Buffer:
         self._data.append(f"\x1b[{y};{x}H")
         return
 
-    def _processLine(self, x: int, maxWidth: int, data: str) -> str:
+    def _processLine(self, x: int, maxWidth: int, data: str) -> Tuple[str, int]:
         escapes = list(ansiEscapeRegex.finditer(data))
         nextEscape = escapes.pop(0) if escapes else None
         preStyles = ""
@@ -63,10 +63,7 @@ class Buffer:
                 if span[0] <= currentIndex <= span[1] - 1:
                     value = nextEscape.group()
                     if xOffset < start:
-                        if value == AnsiStyle.RESET.value and len(preStyles) > 0:
-                            preStyles = ""
-                        else:
-                            preStyles += value
+                        preStyles += value
                     elif xOffset > limit:
                         postStyles += value
                     else:
@@ -86,13 +83,13 @@ class Buffer:
 
             currentIndex += 1
 
-        return preStyles + line + postStyles
+        return preStyles + line + postStyles, xOffset - start
 
     def setString(self, x: int, y: int, data: str):
         if len(data) == 0:
             return
         if 0 <= x + len(data) and x <= self._width and 1 <= y <= self._height:
-            line = self._processLine(x, self._width, data)
+            line, realLen = self._processLine(x, self._width, data)
             if len(line) > 0:
                 self._setCurPos(max(x, 1), min(y, self._height))
                 self._data.append(line)
@@ -123,7 +120,7 @@ class Buffer:
                 span = nextEscape.span()
                 if span[0] <= currentIndex <= span[1] - 1:
                     value = nextEscape.group()
-                    if value == AnsiStyle.RESET.value and len(currentEscapes) > 0:
+                    if value in ANSI_CLOSERS:
                         line = currentEscapes + line + value
                         currentEscapes = ""
                     else:
@@ -138,7 +135,7 @@ class Buffer:
                 continue
             xOffset += 1
             if xOffset > limit or char == "\n":
-                self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.value)
+                self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.open)
                 lineOffset += 1
                 xOffset = 1
                 line = char
@@ -177,7 +174,7 @@ class Buffer:
                 span = nextEscape.span()
                 if span[0] <= currentIndex <= span[1] - 1:
                     value = nextEscape.group()
-                    if value == AnsiStyle.RESET.value and len(currentEscapes) > 0:
+                    if value in ANSI_CLOSERS:
                         line = currentEscapes + line + value
                         currentEscapes = ""
                     else:
@@ -194,7 +191,7 @@ class Buffer:
                     word = data[currentIndex:span[1]]
                     xOffset += len(word)
                     if xOffset > limit:
-                        self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.value)
+                        self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.open)
                         lineOffset += 1
                         xOffset = len(word)
                         line = word
@@ -210,7 +207,7 @@ class Buffer:
                 continue
             xOffset += 1
             if xOffset > limit or char == "\n":
-                self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.value)
+                self.setString(x, y + lineOffset, currentEscapes + line + AnsiStyle.RESET.open)
                 lineOffset += 1
                 if char != " ":
                     line = char
