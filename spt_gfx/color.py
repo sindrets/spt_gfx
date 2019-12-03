@@ -166,7 +166,7 @@ class Color:
 
     @property
     def reversed(self) -> "Color":
-        return self._clone(AnsiStyle.REVERSED)
+        return self._clone(AnsiStyle.REVERSE)
 
     @property
     def strikethrough(self) -> "Color":
