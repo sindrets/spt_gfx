@@ -126,25 +126,25 @@ class Color:
         code = u"\x1b[3" + str(n % 8)
         if n > 7:
             code += ";1"
-        return self._clone(Style(code + "m"))
+        return self._clone(Style(code + "m", AnsiStyle.BLACK.close))
 
     def bgAnsi16(self, n: int) -> "Color":
         code = u"\x1b[4" + str(n % 8)
         if n > 7:
             code += ";1"
-        return self._clone(Style(code + "m"))
+        return self._clone(Style(code + "m", AnsiStyle.BG_BLACK.close))
 
     def ansi256(self, n: int) -> "Color":
-        return self._clone(Style(u"\x1b[38;5;" + str(n % 256) + "m"))
+        return self._clone(Style(u"\x1b[38;5;" + str(n % 256) + "m", AnsiStyle.BLACK.close))
 
     def bgAnsi256(self, n: int) -> "Color":
-        return self._clone(Style(u"\x1b[48;5;" + str(n % 256) + "m"))
+        return self._clone(Style(u"\x1b[48;5;" + str(n % 256) + "m", AnsiStyle.BG_BLACK.close))
 
     def rgb(self, r: int, g: int, b: int) -> "Color":
-        return self._clone(Style(u"\x1b[38;2;" + f"{r};{g};{b}m"))
+        return self._clone(Style(u"\x1b[38;2;" + f"{r};{g};{b}m", AnsiStyle.BLACK.close))
 
     def bgRgb(self, r: int, g: int, b: int) -> "Color":
-        return self._clone(Style(u"\x1b[48;2;" + f"{r};{g};{b}m"))
+        return self._clone(Style(u"\x1b[48;2;" + f"{r};{g};{b}m", AnsiStyle.BG_BLACK.close))
 
     # --- TEXT ATTRIBUTES ---
 
